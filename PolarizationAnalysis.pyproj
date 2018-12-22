@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{e7402cf8-9cf7-4122-802a-14dcaa94ac57}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>analysis.py</StartupFile>
+    <StartupFile>polarimeteranalysis_p36.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
