@@ -20,17 +20,23 @@ def polarizationUncert(p,Theta,dataset,sigmaset): #assuming dataset is ((F0,F90)
         sig45**2.0 * ((F45-F135) / ( np.sqrt((F45-F135)**2.0 + (F0-F90)**2.0) * (F0+F90) ))**2.0 +
         sig135**2.0 * (-1.0*(F45-F135) / ( np.sqrt((F45-F135)**2.0 + (F0-F90)**2.0) * (F0+F90) ))**2.0
         )
+    if np.isnan(sigma_p):
+        print("No polarization.\n")
+        sigma_p = 0.0
 
-    sigma_Theta = np.sqrt(
-        sig0**2.0 * ((F135-F45) / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)**2.0))**2.0 +
-        sig90**2.0 * ((F45-F135) / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)**2.0))**2.0 +
-        sig45**2.0 * (1.0 / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)))**2.0 +
-        sig135**2.0 * (-1.0 / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)))**2.0
-        )
+    sigma_Theta = 0.0
+    try:
+        sigma_Theta = np.sqrt(
+            sig0**2.0 * ((F135-F45) / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)**2.0))**2.0 +
+            sig90**2.0 * ((F45-F135) / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)**2.0))**2.0 +
+            sig45**2.0 * (1.0 / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)))**2.0 +
+            sig135**2.0 * (-1.0 / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)))**2.0
+            )
+    except ZeroDivisionError:
+        print("No polarization; polarization angle is arbitrary.\n")
 
 
     return sigma_p,sigma_Theta
-
 
 def polarizationParams(dataset):
 
@@ -40,17 +46,23 @@ def polarizationParams(dataset):
     F135 = dataset[1][1]
 
     p = np.sqrt( (F0-F90)**2.0 + (F45-F135)**2.0 ) / (F0 + F90)
-    Theta = 0.5 * np.arctan( (F45 - F135) / (F0-F90) )
+    Theta = 0.0
+    try:
+        Theta = 0.5 * np.arctan( (F45 - F135) / (F0-F90) )
+    except ZeroDivisionError:
+        print("No polarization; polarization angle is arbitrary.\n")
+    #if Theta < 0:
+    #    Theta += np.pi/2.0 #maps theta to the major axis instead of minor if negative
 
     return p, Theta
 
-def polarimetry(data,sigmadata): #assumes that data is a list of ordered fluxes by angle for each camera pair, i.e. for angles of ((0,90),(22.5,112.5),(45,135),(67.5,157.5))
+def polarimetry(data,sigmadata): #assumes that data is a list of ordered fluxes by angle for each camera pair, i.e. for angles of ((0,90),(45,135),(22.5,112.5),(67.5,157.5))
 
     #returns a tuple of ((p, sigma_p), (Theta, sigma_Theta))
 
 
-    dataset1 = (data[0], data[2]) #((F0,F90) , (F45,F135))
-    dataset2 = (data[1], data[3]) #((F225,F1125) , (F675, F1575)) #not sure about the validity of this calculation
+    dataset1 = (data[0], data[1]) #((F0,F90) , (F45,F135))
+    dataset2 = (data[2], data[3]) #((F225,F1125) , (F675, F1575)) #not sure about the validity of this calculation
 
     sigmaset1 = (sigmadata[0], sigmadata[2])
     sigmaset2 = (sigmadata[1], sigmadata[3])
@@ -64,10 +76,11 @@ def polarimetry(data,sigmadata): #assumes that data is a list of ordered fluxes 
     #Uncertainty Calculation:
     #Using standard propagation of uncertainty:
 
-    sigma_p1, sigma_Theta1 = polUncert(p1, Theta1, dataset1, sigmaset1)
-    sigma_p2, sigma_Theta2 = polUncert(p2, Theta2, dataset2, sigmaset2)
+    sigma_p1, sigma_Theta1 = polarizationUncert(p1, Theta1, dataset1, sigmaset1)
+    sigma_p2, sigma_Theta2 = polarizationUncert(p2, Theta2, dataset2, sigmaset2)
 
     sigma_p_avg = 0.5 * np.sqrt(sigma_p1**2.0 + sigma_p2**2.0)
     sigma_Theta_avg = 0.5 * np.sqrt(sigma_Theta1**2.0 + sigma_Theta2**2.0)
 
-    return ( (p1, Theta1, sigma_p1, sigma_Theta1), (p2, Theta2, sigma_p2, sigma_Theta2), (p_avg, Theta_avg, sigma_p_avg, sigma_Theta_avg) )
+    return ((p1, Theta1, sigma_p1, sigma_Theta1), (p2, Theta2, sigma_p2, sigma_Theta2), (p_avg, Theta_avg, sigma_p_avg, sigma_Theta_avg) )
+    #return ((p1, Theta1, sigma_p1, sigma_Theta1),())
