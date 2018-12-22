@@ -22,10 +22,10 @@ def polarizationUncert(p,Theta,dataset,sigmaset): #assuming dataset is ((F0,F90)
         )
 
     sigma_Theta = np.sqrt(
-        sig0**2.0 * ()**2.0 +
-        sig90**2.0 * ()**2.0 +
-        sig45**2.0 * ()**2.0 +
-        sig135**2.0 * ()**2.0
+        sig0**2.0 * ((F135-F45) / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)**2.0))**2.0 +
+        sig90**2.0 * ((F45-F135) / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)**2.0))**2.0 +
+        sig45**2.0 * (1.0 / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)))**2.0 +
+        sig135**2.0 * (-1.0 / (2.0*(1.0 + (F45-F135)**2.0/(F0-F90)**2.0)*(F0-F90)))**2.0
         )
 
 
@@ -48,10 +48,9 @@ def polarimetry(data,sigmadata): #assumes that data is a list of ordered fluxes 
 
     #returns a tuple of ((p, sigma_p), (Theta, sigma_Theta))
 
-    # account for bad data? as we only need four points
 
     dataset1 = (data[0], data[2]) #((F0,F90) , (F45,F135))
-    dataset2 = (data[1], data[3]) #((F225,F1125) , (F675, F1575))
+    dataset2 = (data[1], data[3]) #((F225,F1125) , (F675, F1575)) #not sure about the validity of this calculation
 
     sigmaset1 = (sigmadata[0], sigmadata[2])
     sigmaset2 = (sigmadata[1], sigmadata[3])
@@ -59,12 +58,16 @@ def polarimetry(data,sigmadata): #assumes that data is a list of ordered fluxes 
     p1, Theta1 = polarizationParams(dataset1)
     p2, Theta2 = polarizationParams(dataset2)
 
+    p_avg = (p1 + p2) / 2.0
+    Theta_avg = (Theta1 + Theta2) / 2.0
+
     #Uncertainty Calculation:
     #Using standard propagation of uncertainty:
-
-
 
     sigma_p1, sigma_Theta1 = polUncert(p1, Theta1, dataset1, sigmaset1)
     sigma_p2, sigma_Theta2 = polUncert(p2, Theta2, dataset2, sigmaset2)
 
-   
+    sigma_p_avg = 0.5 * np.sqrt(sigma_p1**2.0 + sigma_p2**2.0)
+    sigma_Theta_avg = 0.5 * np.sqrt(sigma_Theta1**2.0 + sigma_Theta2**2.0)
+
+    return ( (p1, Theta1, sigma_p1, sigma_Theta1), (p2, Theta2, sigma_p2, sigma_Theta2), (p_avg, Theta_avg, sigma_p_avg, sigma_Theta_avg) )
