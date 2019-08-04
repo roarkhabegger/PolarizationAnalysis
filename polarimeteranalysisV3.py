@@ -3,8 +3,7 @@
 '''
 import numpy as np
 from scipy.optimize import curve_fit
-
-#follows Dan's derivation outline
+import matplotlib.pyplot as plt
 
 ANGLES = ((0, np.pi/2.0),
           (np.pi/4.0, np.pi*0.75),
@@ -14,6 +13,25 @@ ANGLES = ((0, np.pi/2.0),
 
 def polRatio(theta, Pi, Theta):
     return Pi * np.cos(2.0*(theta - Theta))
+
+def fitPol(angleData, ratioData, sigmaData):
+    plt.figure(1)
+    plt.plot(angleData, ratioData, "k*", markersize=12)
+
+    plotX = np.linspace(np.amin(angleData), np.amax(angleData), 1000)
+    plotFit = np.zeros(1000)
+
+
+    fit = curve_fit(polRatio, angleData, ratioData, sigma=sigmaData, bounds=(np.array([0, 0]), np.array([np.inf, np.pi/2.0])))
+
+    for i in range(plotFit.size):
+        plotFit[i] = polRatio(plotX[i], fit[0][0], fit[0][1])
+
+    plt.plot(plotX, plotFit, "-b")
+    #plt.show()
+
+    #note: uncertainties can only be determined for >1 degrees of freedom. Else, will return an inf.
+    return(fit)
 
 def polUncertainty(data, sigmadata):
     sigmaRatios = np.zeros(4)
@@ -38,7 +56,7 @@ def polarimetry(data, sigmadata):
 
     ratios = np.zeros(4)
 
-    for j in range(3):
+    for j, ratio in enumerate(ratios):
         F0 = data[j][0]
         F90 = data[j][1]
         ratios[j] = (F0 - F90) / (F0 + F90)
@@ -54,7 +72,7 @@ def polarimetry(data, sigmadata):
         ratioData = np.array([ratios[i], ratios[i+1]])
         angleData = np.array([ANGLES[i][0], ANGLES[i+1][0]])
 
-        params, paramsCov = curve_fit(polRatio, angleData, ratioData, sigma=sigmaData)
+        params, paramsCov = fitPol(angleData, ratioData, sigmaData)
     
         allParams[0].append(params[0])
         allParams[1].append(params[1])
@@ -70,7 +88,7 @@ def polarimetry(data, sigmadata):
         ratioData = np.array([ratios[i], ratios[i+1], ratios[i+2]])
         angleData = np.array([ANGLES[i][0], ANGLES[i+1][0], ANGLES[i+2][0]])
 
-        params, paramsCov = curve_fit(polRatio, angleData, ratioData, sigma=sigmaData)
+        params, paramsCov = fitPol(angleData, ratioData, sigmaData)
     
         allParams[0].append(params[0])
         allParams[1].append(params[1])
@@ -87,7 +105,7 @@ def polarimetry(data, sigmadata):
     ratioData = ratios
     angleData = np.array([ANGLES[0][0], ANGLES[1][0], ANGLES[2][0], ANGLES[3][0]])
 
-    params, paramsCov = curve_fit(polRatio, angleData, ratioData, sigma=sigmaData)
+    params, paramsCov = fitPol(angleData, ratioData, sigmaData)
     
     allParams[0].append(params[0])
     allParams[1].append(params[1])
@@ -100,10 +118,10 @@ def polarimetry(data, sigmadata):
 
     #take average of everything
 
-    p = np.average(np.array(allParams[0]))
-    Theta = np.average(np.array(allParams[1]))
+    p = allParams[0]
+    Theta = allParams[1]
 
-    sigma_p = np.average(np.array(allSigmas[0]))
-    sigma_Theta = np.average(np.array(allSigmas[1]))
+    sigma_p = allSigmas[0]
+    sigma_Theta = allSigmas[1]
  
     return ((p, sigma_p), (Theta, sigma_Theta))
