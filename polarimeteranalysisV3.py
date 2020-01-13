@@ -79,8 +79,8 @@ def polarimetry(data, sigmadata):
 
         #uncertainty calculation
        
-        allSigmas[0].append(paramsCov[0][0])
-        allSigmas[1].append(paramsCov[1][1])
+        allSigmas[0].append(np.sqrt(paramsCov[0][0]))
+        allSigmas[1].append(np.sqrt(paramsCov[1][1]))
 
     #triplet calculations
     for i in range(2):
@@ -95,8 +95,8 @@ def polarimetry(data, sigmadata):
 
         #uncertainty calculation
        
-        allSigmas[0].append(paramsCov[0][0])
-        allSigmas[1].append(paramsCov[1][1])
+        allSigmas[0].append(np.sqrt(paramsCov[0][0]))
+        allSigmas[1].append(np.sqrt(paramsCov[1][1]))
 
     #quadruplet calculation
 
@@ -112,8 +112,8 @@ def polarimetry(data, sigmadata):
 
     #uncertainty calculation
        
-    allSigmas[0].append(paramsCov[0][0])
-    allSigmas[1].append(paramsCov[1][1])
+    allSigmas[0].append(np.sqrt(paramsCov[0][0]))
+    allSigmas[1].append(np.sqrt(paramsCov[1][1]))
 
 
     #take average of everything
